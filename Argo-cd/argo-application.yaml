@@ -1,6 +1,25 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: argocd-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/himwasnik/Kubernetes.git
+    targetRevision: HEAD
+    path: Argo-cd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: kind-app
   namespace: argocd
 spec:
@@ -11,7 +30,7 @@ spec:
     path: Kind
   destination:
     server: https://kubernetes.default.svc
-    namespace: kind
+    namespace: nginx
   syncPolicy:
     automated:
       prune: true
@@ -30,7 +49,7 @@ spec:
     path: mysql
   destination:
     server: https://kubernetes.default.svc
-    namespace: mysql
+    namespace: statefulset
   syncPolicy:
     automated:
       prune: true
@@ -49,26 +68,7 @@ spec:
     path: project1
   destination:
     server: https://kubernetes.default.svc
-    namespace: project1
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: rq-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: "Resource Quotas and Limits"
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: resource-quotas
+    namespace: todo-app
   syncPolicy:
     automated:
       prune: true
@@ -87,7 +87,7 @@ spec:
     path: storage
   destination:
     server: https://kubernetes.default.svc
-    namespace: storage
+    namespace: nginx
   syncPolicy:
     automated:
       prune: true
