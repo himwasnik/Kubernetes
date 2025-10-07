@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-deployment
-  namespace: nginx
+  namespace: storage
 spec:
   replicas: 2
   selector:
@@ -16,13 +16,18 @@ spec:
       containers:
         - name: nginx-pod
           image: nginx:latest
-      resources:
-        ports:
-          - containerPort: 80
-        volumeMounts:
-          - mountPath: /usr/share/nginx/html
-            name: myvolume
-
+          ports:                     
+            - containerPort: 80
+          volumeMounts:              
+            - mountPath: /usr/share/nginx/html
+              name: myvolume
+          resources:                 
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
       volumes:
         - name: myvolume
           persistentVolumeClaim:
