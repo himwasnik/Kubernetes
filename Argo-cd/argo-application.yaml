@@ -96,7 +96,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: Resource Quotas and Limits
+  name: resource-quotas-limits
   namespace: argocd
 spec:
   project: default
