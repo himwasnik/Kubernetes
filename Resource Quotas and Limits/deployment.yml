@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
-  namespace: nginx
+  name: limit
+  namespace: limit
 spec:
   selector:
     matchLabels:
-      app: nginx
+      app: limit
   template:
     metadata:
       labels:
-        app: nginx
+        app: limit
     spec:
       containers:
-        - name: nginx
+        - name: limit
           image: nginx:latest
           resources:
             requests:

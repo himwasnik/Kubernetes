@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: mypv
-  namespace: nginx
+  namespace: limit
 spec:
   capacity:
     storage: 500Mi
