@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: apache-service
+  namespace: scaling
+spec:
+  selector:
+    app: apache-deployment
+  ports:
+  - protocol: TCP
+    port: 81
+    targetPort: 80
+  type: ClusterIP
+
