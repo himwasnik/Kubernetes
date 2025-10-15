@@ -5,10 +5,15 @@ metadata:
   namespace: scaling
 spec:
   containers:
-      - name: stress
-        image: progrium/stress
-        args:
+    - name: stress
+      image: progrium/stress
+      args:
         - "--cpu"
         - "4"
         - "--timeout"
         - "180"
+      resources:
+        requests:
+          cpu: "100m"
+        limits:
+          cpu: "500m"

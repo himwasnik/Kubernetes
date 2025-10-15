@@ -4,6 +4,7 @@ metadata:
   name: apache
   namespace: scaling
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: apache-deployment
@@ -15,6 +16,8 @@ spec:
       containers:
         - name: apache
           image: httpd:latest
+          ports:
+            - containerPort: 80
           resources:
             requests:
               cpu: "100m"
@@ -22,5 +25,3 @@ spec:
             limits:
               cpu: "500m"
               memory: "128Mi"
-          ports:
-            - containerPort: 80
