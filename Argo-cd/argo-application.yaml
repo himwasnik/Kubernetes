@@ -116,7 +116,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: pod-scaling
-  namespace: scaling
+  namespace: argocd
 spec:
   project: default
   source:
