@@ -9,6 +9,6 @@ spec:
         image: progrium/stress
         args:
         - "--cpu"
-        - "2"
+        - "4"
         - "--timeout"
         - "180"
