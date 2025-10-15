@@ -13,11 +13,11 @@ spec:
         app: apache-deployment
     spec:
       containers:
-      - name: apache
-        image: httpd:latest
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 80
+        - name: apache
+          image: httpd:latest
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80

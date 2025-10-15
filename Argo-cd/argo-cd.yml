@@ -7,6 +7,8 @@ metadata:
 # Install Argo CD
 
 # kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+#or using helm 
+#helm install argocd argo/argo-cd -n argocd
 # kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | %{[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_))}
 # For brevity, only main resources are shown; you can copy full manifest into your file
 

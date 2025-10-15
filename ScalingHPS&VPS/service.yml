@@ -7,8 +7,7 @@ spec:
   selector:
     app: apache-deployment
   ports:
-  - protocol: TCP
-    port: 81
-    targetPort: 80
+    - protocol: TCP
+      port: 81
+      targetPort: 80
   type: ClusterIP
-
