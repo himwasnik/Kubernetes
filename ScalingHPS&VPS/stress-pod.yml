@@ -17,3 +17,6 @@
 #           cpu: "100m"
 #         limits:
 #           cpu: "500m"
+
+
+#kubectl run -it load-generator -n scaling --image=busybox /bin/sh
