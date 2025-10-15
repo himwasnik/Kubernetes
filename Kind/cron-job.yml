@@ -4,16 +4,16 @@ metadata:
   name: minute-backup
   namespace: nginx
 spec:
-  schedule: "*/1 * * * *"
+  schedule: "* * * * *"
   jobTemplate:
     spec:
       template:
         spec:
-         containers:
-         - name: backup-container
-           image: busybox:latest
-           command:
-            - /bin/sh
-            - -c
-            - date; echo "backup started" ;
-         restartPolicy: OnFailure
+          containers:
+            - name: backup-container
+              image: busybox:latest
+              command:
+                - /bin/sh
+                - -c
+                - date; echo "backup started" ;
+          restartPolicy: OnFailure

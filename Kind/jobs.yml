@@ -8,12 +8,12 @@ spec:
   parallelism: 1
   template:
     metadata:
-     name: demo-job-pod
-     labels:
-       app: batch-task
+      name: demo-job-pod
+      labels:
+        app: batch-task
     spec:
       containers:
-      - name: batch-container 
-        image: busybox:latest
-        command: ["sh","-c","echo Hello himanshu!! && sleep 10"]
+        - name: batch-container
+          image: busybox:latest
+          command: ["sh", "-c", "echo Hello himanshu!! && sleep 10"]
       restartPolicy: Never
