@@ -1,117 +1,117 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: argocd-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: Argo-cd
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: kind-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: Kind
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: nginx
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: mysql-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: mysql
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: statefulset
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: project1-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: project1
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: todo-app
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: storage-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: storage
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: nginx
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: resource-quotas-limits
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: Resource Quotas and Limits
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: limit
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: argocd-app
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: Argo-cd
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: argocd
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: kind-app
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: Kind
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: nginx
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: mysql-app
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: mysql
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: statefulset
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: project1-app
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: project1
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: todo-app
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: storage-app
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: storage
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: nginx
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: resource-quotas-limits
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: Resource Quotas and Limits
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: limit
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
