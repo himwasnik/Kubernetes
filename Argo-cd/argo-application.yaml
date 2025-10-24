@@ -134,7 +134,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: RBAC-app
+  name: rbac-app
   namespace: argocd
 spec:
   project: default
