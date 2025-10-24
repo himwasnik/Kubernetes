@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: RBAC
+  name: rbac
   namespace: rolebase
 spec:
   selector:
     matchLabels:
-      app: RBAC-deployment
+      app: rbac-deployment
   template:
     metadata:
       labels:
-        app: RBAC-deployment
+        app: rbac-deployment
     spec:
       containers:
-      - name: RBAC
-        image: httpd:latest
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 80
+        - name: rbac
+          image: httpd:latest
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80
