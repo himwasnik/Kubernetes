@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: RBAC-service
+  name: rbac-service
   namespace: rolebase
 spec:
   selector:
-    app: RBAC-deployment
+    app: rbac-deployment
   ports:
   - port: 81
     targetPort: 80

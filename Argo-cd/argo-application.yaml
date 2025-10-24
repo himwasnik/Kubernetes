@@ -144,7 +144,7 @@ spec:
     path: RBAC
   destination:
     server: https://kubernetes.default.svc
-    namespace: RBAC
+    namespace: rolebase
   syncPolicy:
     automated:
       prune: true
