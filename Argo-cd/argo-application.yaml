@@ -149,24 +149,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
----
-
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: ldap
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: Ldap-rbac
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: ldap
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-
