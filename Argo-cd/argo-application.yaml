@@ -149,3 +149,22 @@ spec:
     automated:
       prune: true
       selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-dashboard-project
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/himwasnik/Kubernetes.git
+    targetRevision: HEAD
+    path: kubernetes-dashboard
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: "" # Allow creating resources in multiple namespaces
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
