@@ -1,0 +1,55 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bind-dev-himanshu
+  namespace: dev
+subjects:
+  - kind: ServiceAccount
+    name: sa-himanshu
+    namespace: dev
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dev-power-user
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bind-qa-praveen
+  namespace: qa
+subjects:
+  - kind: ServiceAccount
+    name: sa-praveen
+    namespace: qa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: qa-power-user
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bind-qa-praveen-read-dev
+  namespace: dev
+subjects:
+  - kind: ServiceAccount
+    name: sa-praveen
+    namespace: qa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: qa-readonly
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bind-prod-sanjay
+  namespace: prod
+subjects:
+  - kind: ServiceAccount
+    name: sa-sanjay
+    namespace: prod
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prod-operator

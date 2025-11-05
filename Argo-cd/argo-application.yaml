@@ -160,7 +160,7 @@ spec:
   source:
     repoURL: https://github.com/himwasnik/Kubernetes.git
     targetRevision: HEAD
-    path: kubernetes-dashboard
+    path: kube-dashboard
   destination:
     server: https://kubernetes.default.svc
     namespace: "" # Allow creating resources in multiple namespaces
