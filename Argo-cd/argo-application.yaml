@@ -131,40 +131,40 @@
 #       prune: true
 #       selfHeal: true
 # ---
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: rbac-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: RBAC
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: rolebase
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: kube-dashboard-project
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
-    targetRevision: HEAD
-    path: kube-dashboard
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: "" # Allow creating resources in multiple namespaces
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: rbac-app
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: RBAC
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: rolebase
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: kube-dashboard-project
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/himwasnik/Kubernetes.git
+#     targetRevision: HEAD
+#     path: kube-dashboard
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: "" # Allow creating resources in multiple namespaces
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
