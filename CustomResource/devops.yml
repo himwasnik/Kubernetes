@@ -1,0 +1,8 @@
+apiVersion: himanshu.com/v1
+kind: Devops
+metadata:
+  name: sample-devops
+spec:
+  name: SampleProject
+  branch: main
+  buildTool: maven
