@@ -1,6 +1,4 @@
-Here’s your **Apache Helm Chart README.md** in a properly formatted and professional Markdown style 👇
 
----
 
 # 🏗️ Apache Helm Chart
 
