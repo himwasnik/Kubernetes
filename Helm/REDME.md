@@ -93,6 +93,15 @@ kubectl get pods -n apache-namespace
 kubectl get svc -n apache-namespace
 ```
 
+Upgrading the Production Release
+
+If you want to scale or upgrade Apache in production, run:
+```bash
+helm upgrade apache ./apache \
+  --namespace prd-apache \
+  --set replicaCount=6 \
+  --set image.tag=2.4.58
+```
 Forward the service port to access Apache locally:
 
 ```bash
