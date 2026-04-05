@@ -1,20 +1,42 @@
-# Monitoring Stack
+# Production Monitoring Stack
 
-This folder contains monitoring and logging stack configurations: Prometheus, Grafana, and Loki.
-
-## Files
-- `namespace.yml` - Monitoring namespace
-- `prometheus.yml` - Prometheus monitoring with ConfigMap, Deployment, Service, ServiceAccount and RBAC
-- `grafana.yml` - Grafana visualization with datasources
-- `loki.yml` - Loki log aggregation with ConfigMap and Deployment
+Complete Kubernetes monitoring solution with Prometheus, Grafana, and Loki. This setup includes persistent storage, RBAC, network policies, and resource quotas.
 
 ## Architecture
-- **Prometheus**: Metrics collection and storage
-- **Grafana**: Visualization and dashboarding
-- **Loki**: Log aggregation and querying
 
-## Usage
-Deploy monitoring stack:
+- **Prometheus** (v2.45.2): Metrics collection and time-series database
+- **Grafana** (v10.2.2): Visualization and dashboarding platform
+- **Loki** (v2.9.3): Log aggregation and querying system
+- **StatefulSet**: Ensures data persistence across pod restarts
+
+## Features
+
+✅ PersistentVolumes with 30-day retention  
+✅ RBAC and ServiceAccounts configured  
+✅ ResourceQuotas and LimitRanges for namespace isolation  
+✅ NetworkPolicies for security  
+✅ Health checks (liveness & readiness probes)  
+✅ Resource requests and limits  
+✅ Production-grade logging and monitoring  
+
+## Files
+
+- `namespace.yml` - Namespace with ResourceQuota, LimitRange, and NetworkPolicy
+- `prometheus.yml` - Prometheus with persistent storage and comprehensive scraping
+- `grafana.yml` - Grafana with datasources and admin credentials
+- `loki.yml` - Loki StatefulSet with boltdb-shipper storage
+
+## Prerequisites
+
+```bash
+# Kubernetes 1.19+
+# Kind cluster with 4+ cores and 4GB+ RAM
+# Docker/container runtime
+```
+
+## Installation
+
+**Deploy entire monitoring stack:**
 ```bash
 kubectl apply -f namespace.yml
 kubectl apply -f prometheus.yml
@@ -22,39 +44,209 @@ kubectl apply -f grafana.yml
 kubectl apply -f loki.yml
 ```
 
-Or deploy all at once:
+**Or deploy all at once:**
 ```bash
 kubectl apply -f .
 ```
 
+## Verify Deployment
+
+```bash
+# Check namespace
+kubectl get ns monitoring
+
+# Check all resources
+kubectl get all -n monitoring
+
+# Check PersistentVolumes
+kubectl get pvc -n monitoring
+
+# Check pod status
+kubectl get pods -n monitoring -w
+```
+
 ## Access Services
 
-**Prometheus:**
+### Port-Forward (Background Mode)
+
 ```bash
-kubectl port-forward -n monitoring svc/prometheus 9090:9090
-# Visit http://localhost:9090
+# Start all port-forwards in background
+kubectl port-forward -n monitoring svc/prometheus 9090:9090 &
+kubectl port-forward -n monitoring svc/grafana 3000:3000 &
+kubectl port-forward -n monitoring svc/loki 3100:3100 &
+
+# List background jobs
+jobs -l
+
+# Stop all port-forwards
+pkill -f "kubectl port-forward"
 ```
 
-**Grafana:**
+### Service URLs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Prometheus | http://localhost:9090 | Metrics UI & API |
+| Grafana | http://localhost:3000 | Dashboards & Visualization |
+| Loki | http://localhost:3100 | Logs API |
+
+## Credentials
+
+**Grafana Admin:**
+- **Username**: `admin`
+- **Password**: `ChangeMeSecurePassword123`
+
+**Retrieve from Secret:**
 ```bash
-kubectl port-forward -n monitoring svc/grafana 3000:3000
-# Visit http://localhost:3000
-# Default credentials: admin / admin123
+kubectl get secret grafana-admin -n monitoring -o jsonpath='{.data.admin-user}' | base64 -d
+kubectl get secret grafana-admin -n monitoring -o jsonpath='{.data.admin-password}' | base64 -d
 ```
 
-**Loki:**
+**Change Password:**
 ```bash
-kubectl port-forward -n monitoring svc/loki 3100:3100
-# Loki API available at http://localhost:3100
+# Update secret with new password
+NEW_PASS="YourNewPassword123"
+kubectl patch secret grafana-admin -n monitoring \
+  -p "{\"data\":{\"admin-password\":\"$(echo -n $NEW_PASS | base64)\"}}"
 ```
 
-## Configuration
-- Prometheus scrapes Kubernetes API and node metrics
-- Grafana auto-discovers Prometheus as datasource
-- Loki stores logs with BoltDB shipper
-- All use emptyDir volumes (data lost on pod restart - use PersistentVolumes for production)
+## Storage
+
+### PersistentVolumes
+
+| Component | Storage | Retention | Status |
+|-----------|---------|-----------|--------|
+| Prometheus | 20Gi | 30 days (TSDB) | Bound |
+| Grafana | 5Gi | Dashboards & settings | Bound |
+| Loki | 10Gi | 30 days (logs) | Bound |
+
+**Check storage usage:**
+```bash
+kubectl exec -n monitoring prometheus-<pod-id> -- df -h /prometheus
+kubectl exec -n monitoring loki-0 -- du -sh /loki
+```
+
+## Resource Quotas & Limits
+
+**Namespace Quotas:**
+- CPU: 2 cores (requests), 4 cores (limits)
+- Memory: 2Gi (requests), 4Gi (limits)
+- PVCs: up to 5
+- Pods: up to 20
+
+**Per-Container Defaults:**
+- CPU request: 100m, limit: 500m
+- Memory request: 128Mi, limit: 512Mi
+
+**View quotas:**
+```bash
+kubectl describe resourcequota monitoring-quota -n monitoring
+kubectl describe limitrange monitoring-limits -n monitoring
+```
+
+## Network Security
+
+**NetworkPolicies enforced:**
+- Ingress only from monitoring namespace and default namespace
+- Grafana accessible only from prometheus and monitoring pods
+
+**Verify:**
+```bash
+kubectl get networkpolicies -n monitoring
+```
+
+## Grafana Setup
+
+### Connect Datasources
+
+1. **Access Grafana**: http://localhost:3000
+2. Login: `admin` / `ChangeMeSecurePassword123`
+3. Datasources auto-provisioned:
+   - Prometheus (http://prometheus:9090)
+   - Loki (http://loki:3100)
+
+### Import Dashboards
+
+**Popular Dashboards:**
+- Node Exporter: ID 1860
+- Kubernetes Cluster: ID 7249
+- Prometheus Stats: ID 3662
+
+**Import step:**
+```
+Dashboard → New → Import → Enter Dashboard ID
+```
+
+## Prometheus Configuration
+
+### Scrape Targets
+
+- `prometheus` - Self-scraping (9090)
+- `kubernetes-apiservers` - Kubernetes API servers (443)
+- `kubernetes-nodes` - Node metrics (10250)
+- `kubernetes-pods` - Pod metrics (auto-discovered)
+
+### Custom Metrics
+
+Add scrape config to ConfigMap and restart:
+```bash
+kubectl rollout restart deployment/prometheus -n monitoring
+```
+
+## Loki Configuration
+
+### Log Retention
+
+Default: 720 hours (30 days)  
+Modify `retention_period` in `loki.yml` limits_config
+
+### Query Logs
+
+```bash
+curl "http://localhost:3100/loki/api/v1/query_range?query={app=\"prometheus\"}&start=1000&end=2000"
+```
+
+## Troubleshooting
+
+### Check Pod Status
+
+```bash
+kubectl describe pod loki-0 -n monitoring
+kubectl logs loki-0 -n monitoring --tail=50
+```
+
+### Database Connectivity
+
+```bash
+kubectl exec -n monitoring prometheus-<pod-id> -- curl -s grafana:3000/api/health
+```
+
+### Storage Issues
+
+```bash
+# Check PVC binding
+kubectl get pvc -n monitoring
+
+# Check disk usage
+kubectl exec -n monitoring -it loki-0 -- du -sh /loki
+```
+
+## Production Best Practices
+
+1. **Change default Grafana password** immediately
+2. **Enable SSL/TLS** for external access
+3. **Configure persistent backups** for critical data
+4. **Set up alerting rules** in Prometheus
+5. **Enable authentication** for all components
+6. **Monitor the monitoring stack** itself
+7. **Scale based on metrics volume** - adjust PVC sizes
+8. **Enable audit logging** for compliance
+9. **High Availability**: Deploy multiple replicas for HA
+10. **Regular backups**: Schedule daily snapshots
 
 ## References
+
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
 - [Loki Documentation](https://grafana.com/docs/loki/latest/)
+- [Kubernetes Monitoring](https://kubernetes.io/docs/tasks/debug-application-cluster/resource-metrics-pipeline/)
