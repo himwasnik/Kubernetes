@@ -6,12 +6,24 @@ metadata:
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 15s
-      evaluation_interval: 15s
+      scrape_interval: 30s
+      evaluation_interval: 30s
+      external_labels:
+        cluster: "kubernetes"
+    
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: []
+    
+    rule_files:
+      - '/etc/prometheus/rules/*.yml'
+    
     scrape_configs:
       - job_name: 'prometheus'
         static_configs:
           - targets: ['localhost:9090']
+      
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
           - role: endpoints
@@ -19,6 +31,51 @@ data:
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+      
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+      
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: 'true'
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
 
 ---
 apiVersion: apps/v1
@@ -37,24 +94,73 @@ spec:
         app: prometheus
     spec:
       serviceAccountName: prometheus
+      securityContext:
+        fsGroup: 65534
+      
       containers:
       - name: prometheus
-        image: prom/prometheus:latest
+        image: prom/prometheus:v2.45.2
+        imagePullPolicy: IfNotPresent
+        
         ports:
         - containerPort: 9090
+          name: web
+        
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--storage.tsdb.retention.time=30d'
+          - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+          - '--web.console.templates=/usr/share/prometheus/consoles'
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+        
         volumeMounts:
         - name: prometheus-config
           mountPath: /etc/prometheus
         - name: prometheus-storage
           mountPath: /prometheus
-        args:
-          - '--config.file=/etc/prometheus/prometheus.yml'
-          - '--storage.tsdb.path=/prometheus'
+        - name: tmp
+          mountPath: /tmp
+        
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+      
       volumes:
       - name: prometheus-config
         configMap:
           name: prometheus-config
       - name: prometheus-storage
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
+      - name: tmp
         emptyDir: {}
 
 ---
@@ -63,13 +169,16 @@ kind: Service
 metadata:
   name: prometheus
   namespace: monitoring
-spec:
-  selector:
+  labels:
     app: prometheus
+spec:
+  type: ClusterIP
   ports:
   - port: 9090
     targetPort: 9090
-  type: ClusterIP
+    name: web
+  selector:
+    app: prometheus
 
 ---
 apiVersion: v1
@@ -91,6 +200,22 @@ rules:
   - services
   - endpoints
   - pods
+  - events
+  - namespaces
+  - persistentvolumes
+  - persistentvolumeclaims
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources:
+  - jobs
+  - cronjobs
   verbs: ["get", "list", "watch"]
 
 ---

@@ -6,41 +6,64 @@ metadata:
 data:
   loki-config.yaml: |
     auth_enabled: false
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9096
+      log_level: info
+    common:
+      path_prefix: /loki
+      storage:
+        filesystem:
+          chunks_directory: /loki/chunks
+          rules_directory: /loki/rules
+      replication_factor: 1
+      ring:
+        kvstore:
+          store: inmemory
     ingester:
       chunk_idle_period: 3m
       max_chunk_age: 1h
-      max_streams_per_user: 10000
       chunk_retain_period: 1m
-    limits_config:
-      enforce_metric_name: false
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
     schema_config:
       configs:
-      - from: 2020-10-24
-        store: boltdb-shipper
-        object_store: filesystem
-        schema: v11
-        index:
-          prefix: index_
-          period: 24h
-    server:
-      http_listen_port: 3100
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
     storage_config:
       boltdb_shipper:
-        active_index_directory: /loki/boltdb-shipper-active
-        cache_location: /loki/boltdb-shipper-cache
-        shared_store: filesystem
+        active_index_directory: /loki/index
+        cache_location: /loki/cache
       filesystem:
         directory: /loki/chunks
+    limits_config:
+      retention_period: 720h
+      max_streams_per_user: 10000
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: loki
   namespace: monitoring
 spec:
+  serviceName: loki
   replicas: 1
   selector:
     matchLabels:
@@ -50,24 +73,94 @@ spec:
       labels:
         app: loki
     spec:
+      securityContext:
+        fsGroup: 10001
+      serviceAccountName: loki
+      
       containers:
       - name: loki
-        image: grafana/loki:latest
+        image: grafana/loki:2.9.3
+        imagePullPolicy: IfNotPresent
+        
         ports:
-        - containerPort: 3100
+        - name: http
+          containerPort: 3100
+          protocol: TCP
+        - name: grpc
+          containerPort: 9096
+          protocol: TCP
+        
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        
+        securityContext:
+          runAsUser: 10001
+          allowPrivilegeEscalation: false
+        
+        args:
+          - -config.file=/etc/loki/loki-config.yaml
+        
         volumeMounts:
         - name: loki-config
           mountPath: /etc/loki
         - name: loki-storage
           mountPath: /loki
-        args:
-          - -config.file=/etc/loki/loki-config.yaml
+        
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - loki
+              topologyKey: kubernetes.io/hostname
+      
       volumes:
       - name: loki-config
         configMap:
           name: loki-config
-      - name: loki-storage
-        emptyDir: {}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: loki-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
 
 ---
 apiVersion: v1
@@ -75,10 +168,49 @@ kind: Service
 metadata:
   name: loki
   namespace: monitoring
+  labels:
+    app: loki
 spec:
+  clusterIP: None
   selector:
     app: loki
   ports:
-  - port: 3100
-    targetPort: 3100
-  type: ClusterIP
+  - name: http
+    port: 3100
+    targetPort: http
+  - name: grpc  
+    port: 9096
+    targetPort: grpc
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: loki
+  namespace: monitoring
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: loki
+  namespace: monitoring
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: loki
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: loki
+subjects:
+- kind: ServiceAccount
+  name: loki
+  namespace: monitoring
