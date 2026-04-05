@@ -7,7 +7,9 @@ Complete Kubernetes monitoring solution with Prometheus, Grafana, and Loki. This
 - **Prometheus** (v2.45.2): Metrics collection and time-series database
 - **Grafana** (v10.2.2): Visualization and dashboarding platform
 - **Loki** (v2.9.3): Log aggregation and querying system
+- **Promtail** (v2.9.3): Log collector agent for shipping logs to Loki
 - **StatefulSet**: Ensures data persistence across pod restarts
+- **DaemonSet**: Promtail runs on every node for log collection
 
 ## Features
 
@@ -25,6 +27,7 @@ Complete Kubernetes monitoring solution with Prometheus, Grafana, and Loki. This
 - `prometheus.yml` - Prometheus with persistent storage and comprehensive scraping
 - `grafana.yml` - Grafana with datasources and admin credentials
 - `loki.yml` - Loki StatefulSet with boltdb-shipper storage
+- `promtail.yml` - Promtail DaemonSet for log collection from all pod nodes
 
 ## Prerequisites
 
@@ -42,6 +45,7 @@ kubectl apply -f namespace.yml
 kubectl apply -f prometheus.yml
 kubectl apply -f grafana.yml
 kubectl apply -f loki.yml
+kubectl apply -f promtail.yml
 ```
 
 **Or deploy all at once:**
@@ -88,8 +92,7 @@ pkill -f "kubectl port-forward"
 |---------|-----|---------|
 | Prometheus | http://localhost:9090 | Metrics UI & API |
 | Grafana | http://localhost:3000 | Dashboards & Visualization |
-| Loki | http://localhost:3100 | Logs API |
-
+| Loki | http://localhost:3100 | Logs API || Promtail | (no direct access) | Log collector (DaemonSet) |
 ## Credentials
 
 **Grafana Admin:**
@@ -204,6 +207,74 @@ Modify `retention_period` in `loki.yml` limits_config
 
 ```bash
 curl "http://localhost:3100/loki/api/v1/query_range?query={app=\"prometheus\"}&start=1000&end=2000"
+```
+
+## Promtail Configuration
+
+### Overview
+
+Promtail runs as a DaemonSet on every node and collects logs from:
+- `/var/log/pods/` - Kubernetes pod logs
+- All containers in all namespaces
+- Applies relabel configs to extract pod, namespace, container metadata
+
+### Log Labels
+
+Promtail automatically adds labels:
+- `namespace` - Pod namespace
+- `pod` - Pod name
+- `container` - Container name
+- `node` - Node name
+- `job` - namespace/pod_name combination
+- `filename` - Log file path
+
+### Check Promtail Status
+
+```bash
+# View Promtail pods
+kubectl get pods -n monitoring -l app=promtail
+
+# Check Promtail logs for errors
+kubectl logs -n monitoring -l app=promtail --tail=50
+
+# Verify Promtail is scraping pod logs
+kubectl logs -n monitoring -l app=promtail | grep "tail routine: started"
+
+# Check Loki for available labels
+curl -s 'http://localhost:3100/loki/api/v1/labels'
+```
+
+### Query Logs in Grafana
+
+1. Open Grafana: http://localhost:3000
+2. Go to Explore → Select Loki datasource
+3. Use Label browser to select:
+   - `namespace` = "monitoring"
+   - `pod` = "loki-0" (or any pod name)
+4. Click "Run query" to see logs
+
+### Troubleshooting Promtail
+
+**Promtail pods not ready:**
+```bash
+kubectl describe pod <promtail-pod-name> -n monitoring
+kubectl logs <promtail-pod-name> -n monitoring
+```
+
+**Logs not appearing in Loki:**
+```bash
+# Check if Promtail can reach Loki
+kubectl exec -n monitoring <promtail-pod> -- curl -s http://loki.monitoring.svc.cluster.local:3100/ready
+
+# Verify log paths are correct
+kubectl exec -n monitoring <promtail-pod> -- ls -la /var/log/pods/
+```
+
+**DNS resolution errors:**
+Promtail uses FQDN: `loki.monitoring.svc.cluster.local:3100`  
+If logs show DNS errors, restart Promtail DaemonSet:
+```bash
+kubectl rollout restart daemonset/promtail -n monitoring
 ```
 
 ## Troubleshooting
