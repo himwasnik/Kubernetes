@@ -21,18 +21,18 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kind-app
+  name: wanderlust
   namespace: argocd
 
 spec:
   project: default
   source:
-    repoURL: https://github.com/himwasnik/Kubernetes.git
+    repoURL: https://github.com/himwasnik/Wanderlust-Mega-Project.git
     targetRevision: HEAD
     path: Kind
   destination:
     server: https://kubernetes.default.svc
-    namespace: nginx
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
